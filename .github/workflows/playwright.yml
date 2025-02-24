@@ -1,0 +1,47 @@
+name: Test Playwright's demo TodoMVC app
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run-playwright-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Run install script
+      run: |
+        chmod +x install.sh
+        ./install.sh
+
+    - name: Run tests
+      run: |
+        source venv/bin/activate
+        pytest --html=tests/test-results/test-report-${{ matrix.python-version }}.html
+
+    - name: Upload test artifacts for Python ${{ matrix.python-version }}
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-artifacts-${{ matrix.python-version }}
+        path: |
+          tests/test-results/
+          **/*.png
+          **/*.mp4
+          **/*.zip
